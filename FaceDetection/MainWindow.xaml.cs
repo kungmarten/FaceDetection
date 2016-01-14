@@ -50,19 +50,42 @@ namespace FaceDetection
             }
         }
 
+        private Capture _capture = null;
+
+        private void ProcessFrame(object sender, EventArgs e)
+        {
+            try
+            {
+                Image<Bgr, Byte> frame = _capture.RetrieveBgrFrame();
+                CaptureSource.Source = Helper.ToBitmapSource(frame);
+            }
+            catch (Exception exception)
+            {
+
+                System.Windows.MessageBox.Show(exception.ToString());
+            }
+        }
+
         private void button_Click(object sender, RoutedEventArgs e)
         {
             var iHeight = image.Height;
             var iWidth = image.Width;
-            var myCapture = new Capture();
-            var myImage = myCapture.QueryFrame().ToImage<Bgr, Byte>();
-            var grayFrame = myImage.Convert<Gray, byte>();
             CascadeClassifier myClassifier = new CascadeClassifier(@"haarcascade_frontalface_default.xml");
-            var myFaces = myClassifier.DetectMultiScale(grayFrame);
-            foreach (var face in myFaces)
-                myImage.Draw(face, new Bgr(0, double.MaxValue, 0), 3);
-            image.Source = ToBitmapSource(myImage);
 
+            _capture.ImageGrabbed += ProcessFrame;
+            /*myCapture.Start();
+            int myTimes = 5;
+            for (int i = 0; i < myTimes; i++)
+            {
+                Image<Bgr, Byte> myImage = myCapture.RetrieveBgrFrame();
+                var grayFrame = myImage.Convert<Gray, byte>();
+                var myFaces = myClassifier.DetectMultiScale(grayFrame);
+                foreach (var face in myFaces)
+                    myImage.Draw(face, new Bgr(100, 100, 100), 3);
+                image.Source = ToBitmapSource(myImage);
+                System.Threading.Thread.Sleep(5000);
+            }
+            myCapture.Stop();*/
         }
     }
 }
