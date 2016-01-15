@@ -50,29 +50,34 @@ namespace FaceDetection
             }
         }
 
-        private Capture _capture = null;
+        private CascadeClassifier _faceclassifier = new CascadeClassifier(@"haarcascade_frontalface_default.xml");
 
-        private void ProcessFrame(object sender, EventArgs e)
+        private void ProcessFrame()
         {
-            try
-            {
-                Image<Bgr, Byte> frame = _capture.RetrieveBgrFrame();
-                CaptureSource.Source = Helper.ToBitmapSource(frame);
-            }
-            catch (Exception exception)
-            {
-
-                System.Windows.MessageBox.Show(exception.ToString());
-            }
+            Image<Bgr, Byte> ImageFrame = _capture.QueryFrame().ToImage<Bgr, Byte>();  //line 1
+            ImageFrame = DetectFaces(ImageFrame);
+            image.Source = ToBitmapSource(ImageFrame);  //line 2
         }
+
+        private Image<Bgr, Byte> DetectFaces(Image<Bgr, Byte> myImage)
+        {
+            var grayFrame = myImage.Convert<Gray, byte>();
+            var myFaces = _faceclassifier.DetectMultiScale(grayFrame);
+            foreach (var face in myFaces)
+                myImage.Draw(face, new Bgr(100, 100, 100), 3);
+            return myImage;
+        }
+
+        private Capture _capture = new Capture();
+
+        
 
         private void button_Click(object sender, RoutedEventArgs e)
         {
             var iHeight = image.Height;
             var iWidth = image.Width;
-            CascadeClassifier myClassifier = new CascadeClassifier(@"haarcascade_frontalface_default.xml");
-
-            _capture.ImageGrabbed += ProcessFrame;
+            ProcessFrame();
+            //_capture.ImageGrabbed += ProcessFrame;
             /*myCapture.Start();
             int myTimes = 5;
             for (int i = 0; i < myTimes; i++)
