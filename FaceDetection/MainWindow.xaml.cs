@@ -82,8 +82,6 @@ namespace FaceDetection
 
         private void button_Click(object sender, RoutedEventArgs e)
         {
-            var iHeight = image.Height;
-            var iWidth = image.Width;
             timer = new DispatcherTimer();
             timer.Tick += new EventHandler(timer_Tick);
             timer.Interval = new TimeSpan(0, 0, 0, 0, 100);
