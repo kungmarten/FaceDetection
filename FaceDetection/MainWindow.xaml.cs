@@ -15,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace FaceDetection
 {
@@ -63,34 +64,30 @@ namespace FaceDetection
         {
             var grayFrame = myImage.Convert<Gray, byte>();
             var myFaces = _faceclassifier.DetectMultiScale(grayFrame);
+            var noFaces = myFaces.Count();
+            label.Content = noFaces;
             foreach (var face in myFaces)
                 myImage.Draw(face, new Bgr(100, 100, 100), 3);
             return myImage;
         }
 
         private Capture _capture = new Capture();
+        DispatcherTimer timer;
 
-        
+        void timer_Tick(object sender, EventArgs e)
+        {
+            ProcessFrame();
+
+        }
 
         private void button_Click(object sender, RoutedEventArgs e)
         {
             var iHeight = image.Height;
             var iWidth = image.Width;
-            ProcessFrame();
-            //_capture.ImageGrabbed += ProcessFrame;
-            /*myCapture.Start();
-            int myTimes = 5;
-            for (int i = 0; i < myTimes; i++)
-            {
-                Image<Bgr, Byte> myImage = myCapture.RetrieveBgrFrame();
-                var grayFrame = myImage.Convert<Gray, byte>();
-                var myFaces = myClassifier.DetectMultiScale(grayFrame);
-                foreach (var face in myFaces)
-                    myImage.Draw(face, new Bgr(100, 100, 100), 3);
-                image.Source = ToBitmapSource(myImage);
-                System.Threading.Thread.Sleep(5000);
-            }
-            myCapture.Stop();*/
+            timer = new DispatcherTimer();
+            timer.Tick += new EventHandler(timer_Tick);
+            timer.Interval = new TimeSpan(0, 0, 0, 0, 100);
+            timer.Start();
         }
     }
 }
