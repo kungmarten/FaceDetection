@@ -46,7 +46,7 @@ namespace FaceDetection
             }
         }
 
-        private static string subscriptionKey = "ef796b256674419e9c17e2707f28cc50";
+        private static string subscriptionKey = "";
         private static EmotionServiceClient emotionServiceClient = new EmotionServiceClient(subscriptionKey);
 
         public static Bitmap BitmapFromSource(BitmapSource bitmapsource)
