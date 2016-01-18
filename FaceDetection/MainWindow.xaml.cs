@@ -46,6 +46,9 @@ namespace FaceDetection
             }
         }
 
+        private static string subscriptionKey = "ef796b256674419e9c17e2707f28cc50";
+        private static EmotionServiceClient emotionServiceClient = new EmotionServiceClient(subscriptionKey);
+
         public static Bitmap BitmapFromSource(BitmapSource bitmapsource)
         {
             Bitmap bitmap;
@@ -93,7 +96,7 @@ namespace FaceDetection
 
         public void Log(string message)
         {
-            textBox.Text += message;
+            textBox.Text += message + "\n";
         }
 
         private Image<Bgr, Byte> DetectFaces(Image<Bgr, Byte> myImage)
@@ -110,9 +113,8 @@ namespace FaceDetection
         private async Task<Emotion[]> UploadAndDetectEmotions(Image<Bgr, Byte> imageSource)
         {
             MainWindow window = (MainWindow)Application.Current.MainWindow;
-            string subscriptionKey = "";
 
-            //window.Log("EmotionServiceClient is created");
+            Log("EmotionServiceClient is created");
 
             // -----------------------------------------------------------------------
             // KEY SAMPLE CODE STARTS HERE
@@ -121,9 +123,8 @@ namespace FaceDetection
             //
             // Create Project Oxford Emotion API Service client
             //
-            EmotionServiceClient emotionServiceClient = new EmotionServiceClient(subscriptionKey);
 
-            //window.Log("Calling EmotionServiceClient.RecognizeAsync()...");
+            Log("Calling EmotionServiceClient.RecognizeAsync()...");
             try
             {
                 Emotion[] emotionResult;
@@ -140,7 +141,7 @@ namespace FaceDetection
             }
             catch (Exception exception)
             {
-                Console.WriteLine(exception.ToString());
+                Log(exception.ToString());
                 return null;
             }
             // -----------------------------------------------------------------------
@@ -162,7 +163,7 @@ namespace FaceDetection
         {
             myTimer = new DispatcherTimer();
             myTimer.Tick += new EventHandler(timer_Tick);
-            myTimer.Interval = new TimeSpan(0, 0, 0, 1, 000);
+            myTimer.Interval = new TimeSpan(0, 0, 0, 5, 000);
             myTimer.Start();
         }
     }
