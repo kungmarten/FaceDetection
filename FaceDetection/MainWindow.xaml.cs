@@ -1,25 +1,16 @@
 ﻿using Emgu.CV;
 using Emgu.CV.Structure;
-using Emgu.CV.CvEnum;
+using Microsoft.ProjectOxford.Emotion;
+using Microsoft.ProjectOxford.Emotion.Contract;
 using System;
-using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
-using Microsoft.ProjectOxford.Emotion;
-using System.Net.Http;
-using System.IO;
-using System.Drawing.Imaging;
 
 namespace FaceDetection
 {
@@ -55,13 +46,54 @@ namespace FaceDetection
             }
         }
 
+        public static Bitmap BitmapFromSource(BitmapSource bitmapsource)
+        {
+            Bitmap bitmap;
+            using (var outStream = new MemoryStream())
+            {
+                BitmapEncoder enc = new BmpBitmapEncoder();
+                enc.Frames.Add(BitmapFrame.Create(bitmapsource));
+                enc.Save(outStream);
+                bitmap = new Bitmap(outStream);
+            }
+            return bitmap;
+        }
+
         private CascadeClassifier _faceclassifier = new CascadeClassifier(@"haarcascade_frontalface_default.xml");
 
-        private void ProcessFrame()
+        private async void ProcessFrame()
         {
             Image<Bgr, Byte> ImageFrame = _capture.QueryFrame().ToImage<Bgr, Byte>();  //Capture the frame.
+            Task<Emotion[]> emotionTask = UploadAndDetectEmotions(ImageFrame);
             ImageFrame = DetectFaces(ImageFrame);
             image.Source = ToBitmapSource(ImageFrame);  //line 2
+            Emotion[] myEmotions = await emotionTask;
+            if (myEmotions != null)
+            {
+                foreach (Emotion emotion in myEmotions)
+                {
+                    Log("Emotion[" + 'd' + "]");
+                    Log("  .FaceRectangle = left: " + emotion.FaceRectangle.Left
+                             + ", top: " + emotion.FaceRectangle.Top
+                             + ", width: " + emotion.FaceRectangle.Width
+                             + ", height: " + emotion.FaceRectangle.Height);
+
+                    Log("  Anger    : " + emotion.Scores.Anger.ToString());
+                    Log("  Contempt : " + emotion.Scores.Contempt.ToString());
+                    Log("  Disgust  : " + emotion.Scores.Disgust.ToString());
+                    Log("  Fear     : " + emotion.Scores.Fear.ToString());
+                    Log("  Happiness: " + emotion.Scores.Happiness.ToString());
+                    Log("  Neutral  : " + emotion.Scores.Neutral.ToString());
+                    Log("  Sadness  : " + emotion.Scores.Sadness.ToString());
+                    Log("  Surprise  : " + emotion.Scores.Surprise.ToString());
+                    Log("");
+                }
+            }
+        }
+
+        public void Log(string message)
+        {
+            textBox.Text += message;
         }
 
         private Image<Bgr, Byte> DetectFaces(Image<Bgr, Byte> myImage)
@@ -75,34 +107,46 @@ namespace FaceDetection
             return myImage;
         }
 
-        async Task<int> GetEmotion(Image<Bgr, Byte> myImage)
+        private async Task<Emotion[]> UploadAndDetectEmotions(Image<Bgr, Byte> imageSource)
         {
-            // You need to add a reference to System.Net.Http to declare client.
-            HttpClient client = new HttpClient();
-            MemoryStream imageStream = new MemoryStream();
-            System.Drawing.Image img = myImage.ToBitmap();
-            img.Save(imageStream, ImageFormat.Jpeg);
-            string mySubscriptionKey = "xxx";
-            EmotionServiceClient myEmotion = new EmotionServiceClient(mySubscriptionKey);
-            //await myEmotion.RecognizeAsync();
+            MainWindow window = (MainWindow)Application.Current.MainWindow;
+            string subscriptionKey = "";
 
-            // GetStringAsync returns a Task<string>. That means that when you await the
-            // task you'll get a string (urlContents).
-            Task<string> getStringTask = client.GetStringAsync("http://msdn.microsoft.com");
+            //window.Log("EmotionServiceClient is created");
 
-            // You can do work here that doesn't rely on the string from GetStringAsync.
-            //DoIndependentWork();
+            // -----------------------------------------------------------------------
+            // KEY SAMPLE CODE STARTS HERE
+            // -----------------------------------------------------------------------
 
-            // The await operator suspends AccessTheWebAsync.
-            //  - AccessTheWebAsync can't continue until getStringTask is complete.
-            //  - Meanwhile, control returns to the caller of AccessTheWebAsync.
-            //  - Control resumes here when getStringTask is complete. 
-            //  - The await operator then retrieves the string result from getStringTask.
-            string urlContents = await getStringTask;
+            //
+            // Create Project Oxford Emotion API Service client
+            //
+            EmotionServiceClient emotionServiceClient = new EmotionServiceClient(subscriptionKey);
 
-            // The return statement specifies an integer result.
-            // Any methods that are awaiting AccessTheWebAsync retrieve the length value.
-            return urlContents.Length;
+            //window.Log("Calling EmotionServiceClient.RecognizeAsync()...");
+            try
+            {
+                Emotion[] emotionResult;
+                MemoryStream imageStream = new MemoryStream();
+                imageSource.ToBitmap().Save(imageStream, ImageFormat.Bmp);
+                using (imageStream)
+                {
+                    //
+                    // Detect the emotions in the URL
+                    //
+                    emotionResult = await emotionServiceClient.RecognizeAsync(imageStream);
+                    return emotionResult;
+                }
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine(exception.ToString());
+                return null;
+            }
+            // -----------------------------------------------------------------------
+            // KEY SAMPLE CODE ENDS HERE
+            // -----------------------------------------------------------------------
+
         }
 
         private Capture _capture = new Capture();
@@ -118,7 +162,7 @@ namespace FaceDetection
         {
             myTimer = new DispatcherTimer();
             myTimer.Tick += new EventHandler(timer_Tick);
-            myTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
+            myTimer.Interval = new TimeSpan(0, 0, 0, 1, 000);
             myTimer.Start();
         }
     }

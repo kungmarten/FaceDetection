@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FaceDetection", "FaceDetection\FaceDetection.csproj", "{E0148933-CDB5-4BD3-9B68-72493417F300}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{54630EEE-C111-44C7-A555-2ACE22FDFEEB}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\..\Emgu\emgucv-windows-universal 3.0.0.2157\bin\haarcascade_frontalface_alt2.xml = ..\..\..\..\..\..\Emgu\emgucv-windows-universal 3.0.0.2157\bin\haarcascade_frontalface_alt2.xml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
